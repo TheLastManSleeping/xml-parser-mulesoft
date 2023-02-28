@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<file:config name="File_Config" doc:name="File Config" doc:id="d0db956f-db3a-4877-9465-3a959386c7b0" >
+	</file:config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="f3e3ab5d-34a5-41fb-9af5-72686e87d896" >
+		<http:listener-connection host="localhost" port="8081" />
+	</http:listener-config>
+	<file:config name="File_Config1" doc:name="File Config" doc:id="9e006d90-58d6-4112-be62-173ea6cd3d0f" >
+		<file:connection workingDir="/Users/arturhalipov/Desktop/VLM-02" />
+	</file:config>
+	<flow name="xml-parser-v2Flow1" doc:id="4a34f4d1-e966-46d4-a4e2-9f9f94f7c6ad" >
+		<http:listener doc:name="Listener" doc:id="8a479c34-29b3-4c08-8d1d-b1d371e359f4" config-ref="HTTP_Listener_config" path="/xmlparser">
+			<http:response statusCode="200" >
+			</http:response>
+		</http:listener>
+		<file:read doc:name="Read from xml" doc:id="5b4b48df-e38f-49f9-846b-d63513dde4fa" config-ref="File_Config" path="/Users/arturhalipov/Desktop/VLM-02/karnel_logs_20220414.xml"/>
+		<ee:transform doc:name="Clear from 01" doc:id="2efecaf9-11cb-4e7e-bff0-c504d83b1e85" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+
+
+output application/xml skipNullOn="everywhere"
+---
+{
+	karnel_log_management:
+		{
+			(payload.karnel_log_management.*transaction map ( transaction , indexOfTransaction ) -> 
+				if(transaction.status != '01'){
+				transaction: {
+					id: transaction.id,
+					machine_no: transaction.machine_no,
+					shelf_id: transaction.shelf_id,
+					wh_emp: transaction.wh_emp,
+					start_time: transaction.start_time,
+					finish_time: transaction.finish_time,
+					status: transaction.status
+				}
+			} else transaction: null)
+			
+		}
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="To json" doc:id="bcc2791f-fa98-4d51-b467-f8647cc4b5f7">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+
+		payload.karnel_log_management.*transaction map ( transaction , indexOfTransaction ) -> 
+				if ( transaction.status ~= '02' or transaction.status ~= '03' ) now() ++ ' | ' ++ transaction.id ++ ' | ' ++ transaction.start_time ++ ' | ' ++ transaction.wh_emp ++ ' | ' ++ transaction.status
+				
+	 		else now() ++ ' | ' ++ transaction.id ++ ' | ' ++ transaction.start_time ++ ' | ' ++ transaction.wh_emp
+		]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="0798f230-3ad8-481c-8767-e900671bd82c" config-ref="File_Config1" path="/Users/arturhalipov/Desktop/VLM-02/Logs.docx">
+		</file:write>
+	</flow>
+</mule>

@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="xmltype" format="xml">
+      <types:example format="xml" element="karnel_log_management" location="examples/karnel_logs_20220414.xml"/>
+    </types:type>
+    <types:type name="strings" format="java">
+      <types:shape format="raml"><![CDATA[#%RAML 1.0 DataType
+type: string]]></types:shape>
+    </types:type>
+    <types:type name="json" format="java">
+      <types:shape format="raml"><![CDATA[#%RAML 1.0 DataType
+type: string]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#2efecaf9-11cb-4e7e-bff0-c504d83b1e85">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="xmltype"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="xmltype"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#bcc2791f-fa98-4d51-b467-f8647cc4b5f7">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="strings"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>
